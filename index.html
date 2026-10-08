@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>贵学 · 全书预览</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238f5b52' d='M12 5.2C9.8 3.6 6.9 3 4 3v15c2.9 0 5.8.6 8 2.2 2.2-1.6 5.1-2.2 8-2.2V3c-2.9 0-5.8.6-8 2.2z'/%3E%3Cpath fill='%23f7f5f0' d='M12 7v11.2C10 16.9 7.4 16.2 4.8 16V5.2c2.6 0 5.2.7 7.2 1.8z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --fg: #1a1a1a;
+      --muted: #7a726a;
+      --surface: #edeae3;
+      --border: #d6d0c6;
+      --rust: #8f5b52;
+      --rust-light: #a8756b;
+      --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, serif;
+      --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: #35322e;
+      color: var(--fg);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ===== 阅读器外壳 ===== */
+    .reader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1800px;
+    }
+
+    .book {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transform: rotateY(var(--rot, 0deg)) scale(var(--sc, 1));
+      transition: transform 0.4s ease;
+    }
+
+    .book-page {
+      width: var(--pw, 690px);
+      height: var(--ph, 820px);
+      background: var(--bg);
+      color: var(--fg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: var(--py, 46px) var(--px, 46px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+      border-radius: 2px 10px 10px 2px;
+    }
+
+    .book-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(26, 26, 26, 0.03) 0%, transparent 12%),
+        radial-gradient(circle at 80% 70%, rgba(143, 91, 82, 0.04) 0%, transparent 16%),
+        radial-gradient(circle at 50% 90%, rgba(26, 26, 26, 0.02) 0%, transparent 20%);
+    }
+
+    .book-page::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 26px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.10), rgba(0,0,0,0.02) 60%, transparent);
+      pointer-events: none;
+    }
+
+    .page-content {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .folio {
+      position: absolute;
+      bottom: 22px;
+      right: 30px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 2;
+    }
+
+    /* 封面 */
+    .cover-page { padding: 0; background: #c41e24; border-radius: 2px 10px 10px 2px; }
+    .cover-page::before { display: none; }
+    .cover-page::after { display: none; }
+    .cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    /* 目录 */
+    .toc-header { margin-bottom: 44px; }
+
+    .toc-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--rust-light);
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .toc-title {
+      font-family: var(--font-display);
+      font-size: 40px;
+      margin: 8px 0 0;
+      line-height: 1.1;
+    }
+
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .toc-item {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .toc-item:first-child { border-top: 1px solid var(--border); }
+    .toc-item:hover { color: var(--rust); }
+
+    .toc-number {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--rust-light);
+      min-width: 36px;
+    }
+
+    .toc-text { font-size: 20px; letter-spacing: 0.02em; }
+
+    /* 章节页 */
+    .chapter-header { margin-bottom: 40px; }
+
+    .chapter-number-corner {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--rust-light);
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: var(--rust-light);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .chapter-title {
+      font-family: var(--font-display);
+      font-size: 30px;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .chapter-lead {
+      font-size: 21.5px;
+      line-height: 1.85;
+      margin: 0;
+      padding: 18px 0 0 20px;
+      border-left: 3px solid var(--rust);
+      color: var(--fg);
+    }
+
+    .chapter-lead p { margin: 0; }
+
+    .chapter-body {
+      margin-top: 28px;
+      font-size: 20px;
+      line-height: 1.9;
+      color: var(--fg);
+    }
+
+    .chapter-body p { margin: 0 0 1em; }
+    .chapter-body p:last-child { margin-bottom: 0; }
+
+    /* 序言 */
+    .preface-body {
+      font-size: 20px;
+      line-height: 1.9;
+      color: var(--fg);
+    }
+
+    .preface-body p {
+      margin: 0 0 1em;
+      text-indent: 2em;
+    }
+
+    .preface-body p:last-child { margin-bottom: 0; }
+
+    .section-spacer { height: 26px; flex: none; }
+
+    /* 后记 */
+    .afterword-body {
+      margin-top: 32px;
+      font-size: 20px;
+      line-height: 1.9;
+      color: var(--muted);
+    }
+
+    .afterword-body p { margin: 0 0 1em; }
+    .afterword-body p:last-child { margin-bottom: 0; }
+
+    .page-content.chapter-body,
+    .page-content.preface-body,
+    .page-content.afterword-body { margin-top: 0; }
+
+    /* ===== 翻页按钮 ===== */
+    .nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(247, 245, 240, 0.25);
+      background: rgba(247, 245, 240, 0.08);
+      color: #f7f5f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-btn:hover { background: rgba(247, 245, 240, 0.18); border-color: rgba(247, 245, 240, 0.45); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    .nav-prev { left: 22px; }
+    .nav-next { right: 22px; }
+
+    /* ===== 底部进度 ===== */
+    .progress-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: rgba(247, 245, 240, 0.65);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      z-index: 20;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.35));
+    }
+
+    .progress-track {
+      width: min(260px, 30vw);
+      height: 2px;
+      background: rgba(247, 245, 240, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--rust-light);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* 目录里的「序言」入口：链接样式 */
+    .toc-item.toc-link .toc-text { color: var(--rust); }
+    .toc-link-hint {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--rust-light);
+    }
+    .toc-item.toc-link:hover .toc-text { text-decoration: underline; }
+
+    /* 序言阅读浮层 */
+    .preface-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(24, 22, 20, 0.74);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .preface-overlay.open { opacity: 1; visibility: visible; }
+
+    .preface-panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: min(720px, 100%);
+      height: min(88vh, 1040px);
+      background: var(--bg);
+      color: var(--fg);
+      border-radius: 3px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+      transform: translateY(14px);
+      transition: transform 0.25s ease;
+    }
+
+    .preface-overlay.open .preface-panel { transform: translateY(0); }
+
+    .overlay-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 34px 40px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .overlay-head h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      line-height: 1.3;
+      margin: 8px 0 0;
+    }
+
+    .overlay-close {
+      flex: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay-close:hover { color: var(--rust); border-color: var(--rust); }
+    .overlay-close svg { width: 16px; height: 16px; }
+
+    .overlay-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 26px 40px 46px;
+    }
+
+    .overlay-scroll .preface-body { font-size: 20.5px; line-height: 1.9; }
+    .overlay-scroll .preface-body p:last-child { margin-bottom: 0; }
+
+    /* 隐藏的存储区与测量区 */
+    #sheets, #pages { display: none; }
+
+    #measure {
+      position: absolute;
+      left: -10000px;
+      top: 0;
+      visibility: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .book { transition: none !important; }
+      .preface-overlay, .preface-panel { transition: none !important; }
+    }
+
+    @media (max-width: 700px) {
+      .overlay-head { padding: 24px 22px 14px; }
+      .overlay-head h2 { font-size: 23px; }
+      .overlay-scroll { padding: 20px 22px 34px; }
+      .overlay-scroll .preface-body { font-size: 19px; line-height: 1.95; }
+      .preface-panel { height: 92vh; }
+      .preface-overlay { padding: 10px; }
+    }
+
+    @media print {
+      body { background: #fff; overflow: visible; height: auto; }
+      .reader, .nav-btn, .progress-bar { display: none; }
+      #pages { display: block; }
+      .book-page {
+        width: auto;
+        height: auto;
+        min-height: 0;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        page-break-inside: avoid;
+        padding: 2cm;
+      }
+      .book-page::after { display: none; }
+      .cover-image { min-height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reader">
+    <div class="book" id="book"></div>
+  </div>
+
+  <button class="nav-btn nav-prev" id="btnPrev" aria-label="上一页" title="上一页（←）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="nav-btn nav-next" id="btnNext" aria-label="下一页" title="下一页（→）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+
+  <div class="progress-bar">
+    <span id="progressText">1 / 1</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span>贵学</span>
+  </div>
+
+  <!-- 序言阅读浮层（默认不打开，点击目录里的链接才出现） -->
+  <div class="preface-overlay" id="prefaceOverlay" role="dialog" aria-modal="true" aria-label="序言：还没有答案">
+    <div class="preface-panel">
+      <div class="overlay-head">
+        <div>
+          <p class="section-label">Preface</p>
+          <h2>序言：还没有答案</h2>
+        </div>
+        <button class="overlay-close" id="overlayClose" aria-label="关闭序言">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="overlay-scroll" id="prefaceScroll"></div>
+    </div>
+  </div>
+
+  <!-- ===== 内容源（sheets） ===== -->
+  <div id="sheets">
+
+    <!-- 封面 -->
+    <section class="sheet sheet-cover" data-sheet="cover">
+      <img class="cover-image" src="./cover.png" alt="贵学封面">
+    </section>
+
+    <!-- 目录 -->
+    <section class="sheet sheet-toc" data-sheet="toc">
+      <header class="toc-header">
+        <p class="toc-label">Contents</p>
+        <h2 class="toc-title">目录</h2>
+      </header>
+      <ul class="toc-list">
+        <li class="toc-item toc-link" data-open="preface">
+          <span class="toc-number"></span>
+          <span class="toc-text">序言：还没有答案</span>
+          <span class="toc-link-hint">点击查看</span>
+        </li>
+        <li class="toc-item" data-target="s1">
+          <span class="toc-number">01</span>
+          <span class="toc-text">第一辑 钱与认知</span>
+        </li>
+        <li class="toc-item" data-target="s2">
+          <span class="toc-number">02</span>
+          <span class="toc-text">第二辑 决策与时间</span>
+        </li>
+        <li class="toc-item" data-target="s3">
+          <span class="toc-number">03</span>
+          <span class="toc-text">第三辑 工作与职场</span>
+        </li>
+        <li class="toc-item" data-target="s4">
+          <span class="toc-number">04</span>
+          <span class="toc-text">第四辑 生存与生活</span>
+        </li>
+        <li class="toc-item" data-target="s5">
+          <span class="toc-number">05</span>
+          <span class="toc-text">第五辑 处世与人性</span>
+        </li>
+        <li class="toc-item" data-target="afterword">
+          <span class="toc-number"></span>
+          <span class="toc-text">后记：贵学是什么</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 序言 -->
+    <section class="sheet sheet-preface" data-sheet="preface">
+      <header class="chapter-header">
+        <span class="chapter-number-corner"></span>
+        <p class="section-label">Preface</p>
+        <h1 class="chapter-title">序言：还没有答案</h1>
+      </header>
+      <div class="preface-body">
+        <p>毕业以后，我去了几个地方。</p>
+        <p>石家庄，北京，雄市。</p>
+        <p>每到一个地方，我都会带着一个行李箱。</p>
+        <p>里面没有多少东西。几件换洗的衣服，一台电脑，还有一些毕业以后一直没来得及整理的东西。</p>
+        <p>剩下的，是没有被回复的简历。</p>
+        <p>大学毕业以前，我很少认真想过“找不到工作”这件事。</p>
+        <p>我以为毕业应该是一件顺理成章的事情。</p>
+        <p>拍完毕业照，收拾行李，找到工作，然后租一个房子，开始新的生活。</p>
+        <p>大家都是这么过来的。</p>
+        <p>至少以前的我，是这么认为的。</p>
+        <p>真正毕业以后，我才发现，人生并不会因为拿到一张毕业证，就自动进入下一阶段。</p>
+        <p>我开始不停地投简历。</p>
+        <p>每天打开电脑，刷新招聘网站。</p>
+        <p>新的岗位一直在出现，新的公司也一直在招人。</p>
+        <p>可那些职位和我之间，好像总隔着一点什么。</p>
+        <p>投出去的简历很多，收到的回复很少。</p>
+        <p>有时候一天过去，邮箱里什么都没有。</p>
+        <p>偶尔有面试，我会提前出门，坐很久的地铁，或者拖着行李箱坐火车去另一个城市。</p>
+        <p>到了地方以后，找到写字楼，跟着人群上楼，然后坐在一张陌生的桌子前。</p>
+        <p>他们问我学校，问专业，问成绩，问项目，问有没有实习经历。</p>
+        <p>这些问题问得很快。</p>
+        <p>我回答得也很快。</p>
+        <p>后来我渐渐熟悉了面试结束时的那句话：</p>
+        <p>“我们回去再考虑一下。”</p>
+        <p>有些时候，连这句话都没有。</p>
+        <p>走出大楼以后，我会看一眼手机。</p>
+        <p>没有新的消息。</p>
+        <p>然后继续走。</p>
+        <div class="section-spacer"></div>
+        <p>北京那家公司，是我投了很多份简历以后，唯一给我面试机会的公司。</p>
+        <p>那天我坐在面试官对面。</p>
+        <p>他翻着我的简历。</p>
+        <p>翻到教育经历的时候，他停了一下。</p>
+        <p>他说，我学历一般，没有什么工作经验，成绩也不是最好的。</p>
+        <p>他的语气很平静。</p>
+        <p>没有讽刺，也没有提高声音。</p>
+        <p>只是把那些已经写在纸上的东西，一项一项念给我听。</p>
+        <p>后来他说：</p>
+        <p>“你这样的人，到社会上也不一定能取得成功。”</p>
+        <p>我坐在那里，没有说话。</p>
+        <p>其实我有很多话想说。</p>
+        <p>我想告诉他，一个人的成绩和排名不能解释他的全部。</p>
+        <p>我想告诉他，我也不是没有努力。</p>
+        <p>我甚至想告诉他，我的右腿里有自己的组织重建的韧带。</p>
+        <p>想告诉他大学那几年，我拖着一条断掉的腿生活了半年。</p>
+        <p>想告诉他，别人正常上下楼的时候，我要扶着栏杆，一层一层地挪。</p>
+        <p>想告诉他，手术以后，我又重新学了一遍怎么走路。</p>
+        <p>可是最后，我什么都没有说。</p>
+        <p>因为我突然觉得，这些事情对于他来说，没有意义。</p>
+        <p>他看到的是我的简历。</p>
+        <p>学校、成绩、专业、经验。</p>
+        <p>至于一个人曾经怎么走到今天，没有任何一栏可以填写。</p>
+        <p>面试结束以后，我把简历装回文件夹。</p>
+        <p>走出写字楼。</p>
+        <p>北京的天很大，风很干。</p>
+        <p>我站在路边，没有马上走。</p>
+        <p>手下意识地放到了右膝上。</p>
+        <p>它还在那里。</p>
+        <div class="section-spacer"></div>
+        <p>其实在毕业以前，我已经见过一次这样的“没有答案”。</p>
+        <p>大三那年，秋天刚来的时候，我去打篮球。</p>
+        <p>那天下午状态很好。</p>
+        <p>跑动、变向、起跳，身体的每个部位都在按照自己的习惯工作。</p>
+        <p>那时候，我并不知道，一条腿可以在某一个瞬间突然不再听你的话。</p>
+        <p>场上有两个其他学院的人。</p>
+        <p>具体怎么摔倒的，我后来一直没能完全想清楚。</p>
+        <p>只记得身体撞了一下。</p>
+        <p>然后我摔在了木地板上。</p>
+        <p>我右手撑着地，试着站起来。</p>
+        <p>没有站起来。</p>
+        <p>我又试了一次。</p>
+        <p>还是没有。</p>
+        <p>右腿像突然消失了。</p>
+        <p>膝盖里面像空了一块。</p>
+        <p>我的大脑还在命令它站起来，可它已经不再执行。</p>
+        <p>那两个人看见了。</p>
+        <p>他们没有走过来。</p>
+        <p>没有问一句。</p>
+        <p>后来是一个同专业的同学把我扶到了场边。</p>
+        <p>我坐在那里，看着膝盖一点一点肿起来。</p>
+        <p>球场上的人还在打球。</p>
+        <p>篮球砸在地上，球鞋擦过木地板，还有人在喊着传球。</p>
+        <p>一切都在继续。</p>
+        <p>只有我停在那里。</p>
+        <p>第二天中午，我一个人去了医院。</p>
+        <p>医生看了看，说问题不大，休息两周就好了。</p>
+        <p>没有拍片，也没有做更多检查。</p>
+        <p>我信了。</p>
+        <p>那时候我觉得，身体这种东西，休息一段时间，总会自己好起来。</p>
+        <p>两周以后，膝盖还是肿的。</p>
+        <p>走路还是不舒服。</p>
+        <p>我又去了一次医院。</p>
+        <p>这一次拍了片。</p>
+        <p>前叉断了。</p>
+        <p>医生告诉我，需要做手术。</p>
+        <p>我给我妈打了视频电话。</p>
+        <p>我尽量用平常的语气告诉她这件事。</p>
+        <p>她在电话那头沉默了一会儿。</p>
+        <p>问我什么时候做，需要多少钱。</p>
+        <p>我说，我想做完手术以后回家养着，等考试的时候再回来。</p>
+        <p>她说，那你问问学校行不行。</p>
+        <p>我问了。</p>
+        <p>不行。</p>
+        <p>具体是什么手续，我现在已经记不清了。</p>
+        <p>我只记得，我不能走。</p>
+        <p>于是手术只能往后拖。</p>
+        <p>那条断掉的韧带，又在我的膝盖里待了半年。</p>
+        <p>那半年里，我还是照常上课。</p>
+        <p>照常去食堂。</p>
+        <p>照常回宿舍。</p>
+        <p>右腿不能跑，不能跳，也不敢真正弯下去。</p>
+        <p>上下楼梯的时候，我扶着栏杆，把重心尽量压在左腿上。</p>
+        <p>有人问我：</p>
+        <p>“你腿还没好？”</p>
+        <p>我说：</p>
+        <p>“快了。”</p>
+        <p>其实我知道，它不会自己好。</p>
+        <p>前叉断了就是断了。</p>
+        <p>可是生活不会因为你的身体出了问题，就替你按下暂停键。</p>
+        <p>课还是要上。</p>
+        <p>考试还是要考。</p>
+        <p>日子还是一天一天地过。</p>
+        <p>半年以后，我终于去做了手术。</p>
+        <p>麻醉以后，下半身慢慢失去知觉。</p>
+        <p>我躺在手术台上，意识清醒，却感觉不到自己的腿在哪里。</p>
+        <p>手术时，医生取了我自己的组织，用来重建断掉的前叉。</p>
+        <p>醒来的时候，右腿被支具固定着。</p>
+        <p>笔直，僵硬。</p>
+        <p>那是我的组织。</p>
+        <p>可那一阵子，它又不像是我的。</p>
+        <p>接下来的日子，我开始重新学走路。</p>
+        <p>以前十分钟的路，要走半个小时。</p>
+        <p>上下楼梯的时候，我经常走到一半停下来。</p>
+        <p>看着自己的右腿。</p>
+        <p>那时候我脑子里总有一个画面：</p>
+        <p>左腿踩在实处。</p>
+        <p>右腿悬在虚空里。</p>
+        <p>我想把它放下去。</p>
+        <p>却不知道下面是什么。</p>
+        <div class="section-spacer"></div>
+        <p>毕业是在夏天。</p>
+        <p>那时候我的腿已经能走路了，但还不敢完全发力。</p>
+        <p>我穿着学士服站在操场上拍照。</p>
+        <p>照片里的我笑得很正常。</p>
+        <p>没有人看得出来，站着的时候，我还是会下意识把重心放到左腿上。</p>
+        <p>拍完以后，同学们开始搬行李。</p>
+        <p>有人已经找到了工作。</p>
+        <p>有人准备继续读书。</p>
+        <p>有人去了新的城市。</p>
+        <p>我也拖着一个行李箱离开学校。</p>
+        <p>到了邯郸东站，我在人群里等车。</p>
+        <p>右手拉着行李箱。</p>
+        <p>左手下意识摸了一下右膝。</p>
+        <p>这个动作不知道什么时候已经变成了习惯。</p>
+        <p>那时候我以为，腿已经好了，大学也毕业了，接下来只是换一个地方生活。</p>
+        <p>后来才知道，真正困难的部分，恰恰从这里开始。</p>
+        <div class="section-spacer"></div>
+        <p>石家庄。</p>
+        <p>北京。</p>
+        <p>雄市。</p>
+        <p>我去了一个又一个地方。</p>
+        <p>开始的时候，我还会认真准备每一次面试。</p>
+        <p>提前很久出门，把简历检查好，再在路上想一遍可能会被问到的问题。</p>
+        <p>后来次数多了，也就没那么紧张了。</p>
+        <p>因为我慢慢知道，大多数面试并不会改变什么。</p>
+        <p>有一次，石家庄一家小公司的老板和我聊了没多久，就说：</p>
+        <p>“我们这儿庙小，容不下你这样的人。”</p>
+        <p>我从那家公司出来以后，在门口站了一会儿。</p>
+        <p>我不知道他说得对不对。</p>
+        <p>也许我的语气确实有问题。</p>
+        <p>也许我的表情让人觉得我待不住。</p>
+        <p>也许我身上确实有一点自己没有察觉到的傲气。</p>
+        <p>我后来也想过，是不是我要求得太多。</p>
+        <p>可是再想想，好像也没有谁真的错。</p>
+        <p>他需要的是一个适合这家公司的人。</p>
+        <p>而我还在找一个自己愿意留下来的地方。</p>
+        <p>这两件事刚好没有碰上。</p>
+        <p>就这么简单。</p>
+        <p>可这些拒绝加在一起的时候，人还是会怀疑自己。</p>
+        <p>是不是我真的不够好。</p>
+        <p>是不是别人说的都对。</p>
+        <p>是不是大学四年过去，我最后还是只剩下一张不够好看的简历。</p>
+        <p>这些问题，我现在都没有答案。</p>
+        <div class="section-spacer"></div>
+        <p>现在我在雄市。</p>
+        <p>一个朋友租了合租房，我暂时住在他那里。</p>
+        <p>晚上，我们两个人睡一张床。</p>
+        <p>床不算大。</p>
+        <p>翻身的时候，总要小心一点。</p>
+        <p>他很少问我工作怎么样。</p>
+        <p>早上他出门上班以后，屋子里就只剩下我一个人。</p>
+        <p>我坐在床边，打开电脑。</p>
+        <p>招聘网站还在不停更新。</p>
+        <p>新的岗位不断出现。</p>
+        <p>我还是会投。</p>
+        <p>投完以后，再等消息。</p>
+        <p>有时候一个星期都没有新的面试。</p>
+        <p>有时候会突然接到一个电话。</p>
+        <p>聊专业，聊学校，聊工资。</p>
+        <p>聊完以后，对方说：</p>
+        <p>“我们考虑一下。”</p>
+        <p>我已经知道这句话后面通常意味着什么。</p>
+        <p>下午饿了，我会自己做饭。</p>
+        <p>切土豆丝，放油，看着它们在锅里一点一点变黄。</p>
+        <p>有时候炒得久了一点，边缘会变焦。</p>
+        <p>我端出来，一个人吃。</p>
+        <p>桌上有朋友的水杯、抹布，还有一些他的东西。</p>
+        <p>都是很普通的东西。</p>
+        <p>普通到让我越来越清楚，这里是他的生活。</p>
+        <p>而我只是暂时住进来的人。</p>
+        <p>朋友对我很好。</p>
+        <p>好到有时候，我不知道该怎么还。</p>
+        <p>他不会催我，也不会问我什么时候离开。</p>
+        <p>有时候晚上回来，他会把门关得很轻。</p>
+        <p>有时候买了水果放在桌上，也不叫我。</p>
+        <p>我后来自己拿一个。</p>
+        <p>有一天晚上，我们两个人躺在床上。</p>
+        <p>电视开着。</p>
+        <p>谁也没有认真看。</p>
+        <p>我们也没有说话。</p>
+        <p>房间里很安静。</p>
+        <p>但我知道他在。</p>
+        <p>那一刻我突然觉得，一个人愿意在自己已经不算宽敞的生活里，再给另一个人留出一点位置，这件事本身就已经很好了。</p>
+        <p>也正因为这样，我才更想赶紧找到工作。</p>
+        <p>赶紧租一间自己的房子。</p>
+        <p>赶紧拥有自己的生活。</p>
+        <p>不是因为这里不好。</p>
+        <p>恰恰是因为这里太好了。</p>
+        <p>我不想一直借住在别人的生活里。</p>
+        <div class="section-spacer"></div>
+        <p>毕业以后，我开始重新理解很多以前习以为常的东西。</p>
+        <p>以前我觉得，很多事情应该有一个明确的结果。</p>
+        <p>考研成功或者失败。</p>
+        <p>找到工作或者找不到。</p>
+        <p>留在北京或者离开。</p>
+        <p>成功或者不成功。</p>
+        <p>好像人生最后总会有人告诉你，你现在到底处于什么位置。</p>
+        <p>可真正毕业以后，我越来越不知道应该怎么判断这些事情。</p>
+        <p>有人一毕业就有工作。</p>
+        <p>有人找了很久。</p>
+        <p>有人留在大城市。</p>
+        <p>有人回了家。</p>
+        <p>有人很早就知道自己想要什么。</p>
+        <p>也有人到了二十几岁，还是不知道。</p>
+        <p>我不知道自己现在算不算失败。</p>
+        <p>也不知道什么时候才能真正站稳。</p>
+        <p>甚至不知道几年以后回头看今天，会不会觉得现在的这些事情其实没有那么严重。</p>
+        <p>这些问题，我都没有答案。</p>
+        <p>以前我不太能接受“没有答案”这件事。</p>
+        <p>总觉得只要努力够多，总会得到一个结果。</p>
+        <p>后来才慢慢明白，有些时候不是你不够努力。</p>
+        <p>只是事情本身还没有走到可以回答的时候。</p>
+        <div class="section-spacer"></div>
+        <p>我有时候还是会想起那条右腿。</p>
+        <p>想起那个篮球场。</p>
+        <p>想起自己躺在那里，一次又一次试着站起来。</p>
+        <p>也会想起后来扶着栏杆下楼。</p>
+        <p>左腿踩在实处。</p>
+        <p>右腿悬在虚空里。</p>
+        <p>那时候我以为，只要把手术做完，只要腿恢复，就算过去了。</p>
+        <p>现在才知道，人身上有些东西不会随着伤口愈合就消失。</p>
+        <p>它们会留下来。</p>
+        <p>变成一些很小的习惯。</p>
+        <p>比如下楼的时候，下意识扶一下栏杆。</p>
+        <p>比如坐久以后，先活动一下右腿。</p>
+        <p>比如站着的时候，还是会习惯性地把重心放到左边。</p>
+        <p>有些经历也是这样。</p>
+        <p>它们不会一直疼。</p>
+        <p>但会留下来。</p>
+        <p>提醒你自己曾经怎样走过来。</p>
+        <div class="section-spacer"></div>
+        <p>现在的我，还是不知道下一份工作在哪里。</p>
+        <p>不知道自己会留在哪个城市。</p>
+        <p>不知道什么时候能够真正拥有一个属于自己的房间。</p>
+        <p>甚至不知道几年以后，自己会变成什么样的人。</p>
+        <p>以前我总想尽快得到答案。</p>
+        <p>现在没有那么着急了。</p>
+        <p>不是因为我已经想明白了。</p>
+        <p>而是因为我开始接受，有些答案，本来就不应该这么早出现。</p>
+        <p>我能做的，好像也只有把今天过完。</p>
+        <p>继续投简历。</p>
+        <p>继续坐车。</p>
+        <p>继续做饭。</p>
+        <p>继续面对那些没有回复的消息。</p>
+        <p>继续生活。</p>
+        <p>有时候，我也会怀疑自己是不是走得太慢了。</p>
+        <p>但我后来想起那条右腿。</p>
+        <p>它曾经断过。</p>
+        <p>也曾经很长一段时间无法正常工作。</p>
+        <p>最后它还是一点一点恢复了。</p>
+        <p>没有突然变好。</p>
+        <p>也没有某一天醒来以后，一切恢复成从前。</p>
+        <p>只是一天一天地练。</p>
+        <p>一步一步地走。</p>
+        <p>走得慢一些。</p>
+        <p>也没关系。</p>
+        <div class="section-spacer"></div>
+        <p>现在右腿还是有些僵。</p>
+        <p>走快了会酸。</p>
+        <p>坐久了也会不舒服。</p>
+        <p>它没有恢复成从前的样子。</p>
+        <p>也许以后也不会。</p>
+        <p>可它已经可以带着我走很远了。</p>
+        <p>今天早上，朋友起床以后先去上班。</p>
+        <p>我坐在床边醒了一会儿。</p>
+        <p>打开电脑。</p>
+        <p>招聘网站上没有新的消息。</p>
+        <p>我关掉电脑。</p>
+        <p>站起来。</p>
+        <p>右腿有一点酸。</p>
+        <p>我还是出了门。</p>
+        <p>我不知道接下来会去哪儿。</p>
+        <p>也不知道什么时候才能真正找到自己的位置。</p>
+        <p>我只是还没有答案。</p>
+        <p>但这一次，我没有停下来。</p>
+      </div>
+    </section>
+
+    <!-- 1.1 -->
+    <section class="sheet sheet-chapter" data-sheet="s1">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">1.1</span>
+        <p class="section-label">第一辑 钱与认知</p>
+        <h1 class="chapter-title">钱不是身外之物，是身外之障</h1>
+      </header>
+      <blockquote class="chapter-lead">
+        <p>一个人什么时候能够学会成长？当你把钱看作身外之物的时候。因为钱会阻碍你下定决心，阻碍你去做一定的决定。</p>
+      </blockquote>
+      <div class="chapter-body">
+        <p>（正文样章，其余内容略）</p>
+      </div>
+    </section>
+
+    <!-- 1.2 -->
+    <section class="sheet sheet-chapter" data-sheet="s1">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">1.2</span>
+        <p class="section-label">第一辑 钱与认知</p>
+        <h1 class="chapter-title">普通人的建议不要听，非普通人的建议也不要听</h1>
+      </header>
+      <div class="chapter-body">
+        <p>给普通人一个建议：普通人的建议不要听，非普通人的建议也不要听——人家没必要教给你真本事。</p>
+      </div>
+    </section>
+
+    <!-- 1.3 -->
+    <section class="sheet sheet-chapter" data-sheet="s1">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">1.3</span>
+        <p class="section-label">第一辑 钱与认知</p>
+        <h1 class="chapter-title">与其说认知决定收入，不如说道德决定收入</h1>
+      </header>
+      <div class="chapter-body">
+        <p>与其说是认知决定收入，倒不如说是道德决定收入。如果你单纯从事体力劳动，那收入高没得说；但如果你不从事体力劳动，然后收入也不低，那……</p>
+      </div>
+    </section>
+
+    <!-- 2.1 -->
+    <section class="sheet sheet-chapter" data-sheet="s2">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">2.1</span>
+        <p class="section-label">第二辑 决策与时间</p>
+        <h1 class="chapter-title">遇到难以抉择的事，有三种方法</h1>
+      </header>
+      <div class="chapter-body">
+        <p>贵学的基础理论：遇到难以抉择的事情，可采取以下方法——1. 向下兼容（这是本人最不建议采取的方式方法）；2. 转型；3. 扩大再生产。</p>
+      </div>
+    </section>
+
+    <!-- 2.2 -->
+    <section class="sheet sheet-chapter" data-sheet="s2">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">2.2</span>
+        <p class="section-label">第二辑 决策与时间</p>
+        <h1 class="chapter-title">“来日方长”不一定方长</h1>
+      </header>
+      <div class="chapter-body">
+        <p>“来日方长”说的是：以后还有时间，还有机会，不必急于一时。它像一句温柔的宽慰，但它的力量寄托在“来日”上。问题是，来日并不一定方长，人生常有意外和错过。它有时还会变成拖延的借口：今天不做的，以后再说；现在不见的，以后再见。</p>
+      </div>
+    </section>
+
+    <!-- 2.3 -->
+    <section class="sheet sheet-chapter" data-sheet="s2">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">2.3</span>
+        <p class="section-label">第二辑 决策与时间</p>
+        <h1 class="chapter-title">回忆过去，不如展望未来</h1>
+      </header>
+      <div class="chapter-body">
+        <p>贵学的基本概念：回忆过去，远不如展望未来。</p>
+      </div>
+    </section>
+
+    <!-- 3.1 -->
+    <section class="sheet sheet-chapter" data-sheet="s3">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">3.1</span>
+        <p class="section-label">第三辑 工作与职场</p>
+        <h1 class="chapter-title">上班还是挺锻炼人的</h1>
+      </header>
+      <div class="chapter-body">
+        <p>我觉得上班还是挺锻炼人的。如果是高工资，它能让不正常的人变成正常人；如果是低工资，它能让正常人变成不正常的人。</p>
+      </div>
+    </section>
+
+    <!-- 3.2 -->
+    <section class="sheet sheet-chapter" data-sheet="s3">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">3.2</span>
+        <p class="section-label">第三辑 工作与职场</p>
+        <h1 class="chapter-title">天大的功劳，也没人会感恩戴德</h1>
+      </header>
+      <div class="chapter-body">
+        <p>工作上，就算你有天大的功劳，说实话，也没有人会对你感恩戴德，都觉得是理所应当。</p>
+      </div>
+    </section>
+
+    <!-- 4.1 -->
+    <section class="sheet sheet-chapter" data-sheet="s4">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">4.1</span>
+        <p class="section-label">第四辑 生存与生活</p>
+        <h1 class="chapter-title">生存成本可以很低</h1>
+      </header>
+      <div class="chapter-body">
+        <p>流浪这几天，我发现了一件事情：生存成本低，不需要买房子，可以睡公园的长椅。但有一个问题，公园的长椅太短了。而通勤需求不大，不需要买车。</p>
+      </div>
+    </section>
+
+    <!-- 4.2 -->
+    <section class="sheet sheet-chapter" data-sheet="s4">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">4.2</span>
+        <p class="section-label">第四辑 生存与生活</p>
+        <h1 class="chapter-title">找工作期间的资金消耗应对方案</h1>
+      </header>
+      <div class="chapter-body">
+        <p>老是有人问，每天找工作资金消耗大怎么办？统一回复了：早上就去公园锻炼身体；上午热了，就去商场吹空调；中午饿了，就去试吃；下午有太阳，就去树下边吹会儿自然风；晚上继续试吃；睡觉就去 ICBC 24 小时取款机那里睡。记住，晚点去，早点走。</p>
+      </div>
+    </section>
+
+    <!-- 5.1 -->
+    <section class="sheet sheet-chapter" data-sheet="s5">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">5.1</span>
+        <p class="section-label">第五辑 处世与人性</p>
+        <h1 class="chapter-title">人都要学会忍耐，韬光养晦</h1>
+      </header>
+      <div class="chapter-body">
+        <p>明白了一个道理：我们都需要忍耐，韬光养晦。</p>
+      </div>
+    </section>
+
+    <!-- 5.2 -->
+    <section class="sheet sheet-chapter" data-sheet="s5">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">5.2</span>
+        <p class="section-label">第五辑 处世与人性</p>
+        <h1 class="chapter-title">越自卑、越无能的人，脾气越大</h1>
+      </header>
+      <div class="chapter-body">
+        <p>最近有所感悟：越自卑、越无能的人，脾气越大。这样的人，我们要远离。</p>
+      </div>
+    </section>
+
+    <!-- 5.3 -->
+    <section class="sheet sheet-chapter" data-sheet="s5">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">5.3</span>
+        <p class="section-label">第五辑 处世与人性</p>
+        <h1 class="chapter-title">迅速与无功能性的人切割</h1>
+      </header>
+      <div class="chapter-body">
+        <p>贵学的核心宗旨就是：迅速与无功能性的人切割，不要优柔寡断，拖泥带水。</p>
+      </div>
+    </section>
+
+    <!-- 后记 -->
+    <section class="sheet sheet-afterword" data-sheet="afterword">
+      <header class="chapter-header">
+        <span class="chapter-number-corner"></span>
+        <p class="section-label">Afterword</p>
+        <h1 class="chapter-title">后记：贵学是什么</h1>
+      </header>
+      <div class="afterword-body">
+        <p>（作者暂未定义“贵”与“贵学”的具体含义。）</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 测量容器（与真实页面同宽同排版，用于自动分页） -->
+  <div id="measure" class="page-content"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var bookEl = document.getElementById('book');
+      var sheetsEl = document.getElementById('sheets');
+      var measureEl = document.getElementById('measure');
+      var btnPrev = document.getElementById('btnPrev');
+      var btnNext = document.getElementById('btnNext');
+      var progressText = document.getElementById('progressText');
+      var progressFill = document.getElementById('progressFill');
+      var overlay = document.getElementById('prefaceOverlay');
+      var overlayScroll = document.getElementById('prefaceScroll');
+      var overlayClose = document.getElementById('overlayClose');
+
+      var PAGE_W, PAGE_H, PAD_X, PAD_Y, SCALE, CONTENT_W, CONTENT_H;
+      var pages = [];        // {sheetId, el}
+      var sheetStart = {};   // sheetId -> first page index
+      var cur = 0;
+      var busy = false;
+      var currentSheetId = null;
+      var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function computeLayout() {
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        if (vw < 700) {
+          PAGE_W = Math.max(320, Math.min(vw - 14, 620));
+          PAGE_H = Math.max(430, Math.min(vh - 108, 1100));
+          PAD_X = 26;
+          PAD_Y = 34;
+          SCALE = 1;
+        } else {
+          PAGE_W = 690;
+          PAGE_H = 820;
+          PAD_X = 46;
+          PAD_Y = 46;
+          SCALE = Math.min(1, (vh - 112) / PAGE_H, (vw - 232) / PAGE_W);
+        }
+        CONTENT_W = PAGE_W - PAD_X * 2;
+        CONTENT_H = PAGE_H - PAD_Y * 2 - 44; /* 预留页码区 */
+        document.documentElement.style.setProperty('--pw', PAGE_W + 'px');
+        document.documentElement.style.setProperty('--ph', PAGE_H + 'px');
+        document.documentElement.style.setProperty('--px', PAD_X + 'px');
+        document.documentElement.style.setProperty('--py', PAD_Y + 'px');
+      }
+
+      function stylePage(el) {
+        el.style.width = PAGE_W + 'px';
+        el.style.height = PAGE_H + 'px';
+      }
+
+      function measureH(node) {
+        /* 追加一个零高守卫元素，避免被测节点命中 :last-child 规则导致少算外边距 */
+        var guard = document.createElement('i');
+        guard.style.cssText = 'display:block;height:0;margin:0;padding:0;border:0;';
+        measureEl.appendChild(node);
+        measureEl.appendChild(guard);
+        var r = node.getBoundingClientRect();
+        var cs = getComputedStyle(node);
+        var h = r.height + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+        measureEl.removeChild(node);
+        measureEl.removeChild(guard);
+        return h;
+      }
+
+      function splitParagraph(pNode, availH) {
+        var text = pNode.textContent;
+        var parts = text.split(/(?<=[。！？；，、：\s])/);
+        var out = [];
+        var curP = document.createElement('p');
+        parts.forEach(function (part) {
+          if (!part) return;
+          var test = curP.cloneNode(false);
+          test.textContent = curP.textContent + part;
+          if (measureH(test) > availH && curP.textContent) {
+            out.push(curP);
+            curP = document.createElement('p');
+            curP.textContent = part;
+          } else {
+            curP.textContent = test.textContent;
+          }
+        });
+        if (curP.textContent) out.push(curP);
+        return out;
+      }
+
+      function buildPages() {
+        pages = [];
+        sheetStart = {};
+        var sheets = sheetsEl.querySelectorAll('.sheet');
+        var sectionStarts = [];
+        sheets.forEach(function (sheet) {
+          /* 序言不进翻页流程：它只在浮层里按需打开 */
+          if (sheet.classList.contains('sheet-preface')) return;
+          var id = sheet.getAttribute('data-sheet');
+          var sheetFirst = pages.length;
+          sectionStarts.push(sheetFirst);
+          if (sheetStart[id] === undefined) sheetStart[id] = sheetFirst;
+          var isCover = sheet.classList.contains('sheet-cover');
+          var isToc = sheet.classList.contains('sheet-toc');
+
+          if (isCover) {
+            var coverPage = makePageEl(id, true, null);
+            var img = sheet.querySelector('.cover-image').cloneNode(true);
+            coverPage.el.querySelector('.page-content').appendChild(img);
+            /* 封面页按封面图自身比例铺满，避免裁切画面 */
+            var cr = (img.naturalWidth && img.naturalHeight) ? (img.naturalWidth / img.naturalHeight) : (2 / 3);
+            var ch = PAGE_H, cw = ch * cr;
+            if (cw > PAGE_W) { cw = PAGE_W; ch = cw / cr; }
+            coverPage.el.style.width = Math.round(cw) + 'px';
+            coverPage.el.style.height = Math.round(ch) + 'px';
+            pages.push(coverPage);
+            return;
+          }
+
+          if (isToc) {
+            var tocPage = makePageEl(id, false, null);
+            var tocContent = document.createElement('div');
+            tocContent.className = 'toc-wrap';
+            tocContent.appendChild(sheet.querySelector('.toc-header').cloneNode(true));
+            tocContent.appendChild(sheet.querySelector('.toc-list').cloneNode(true));
+            tocContent.style.display = 'flex';
+            tocContent.style.flexDirection = 'column';
+            tocContent.style.flex = '1';
+            tocContent.style.minHeight = '0';
+            tocPage.el.querySelector('.page-content').appendChild(tocContent);
+            pages.push(tocPage);
+            return;
+          }
+
+          // 普通内容页：把标题、引语、正文段落展平成块，逐块自动分页
+          var body = sheet.querySelector('.preface-body, .chapter-body, .afterword-body');
+          var bodyClass = body ? body.className : '';
+          var blocks = [];
+          var header = sheet.querySelector('.chapter-header');
+          var lead = sheet.querySelector('.chapter-lead');
+          if (header) blocks.push(header);
+          if (lead) blocks.push(lead);
+          if (body) {
+            Array.prototype.forEach.call(body.children, function (c) { blocks.push(c); });
+          }
+          if (!blocks.length) blocks = Array.prototype.slice.call(sheet.children);
+
+          measureEl.className = 'page-content' + (bodyClass ? ' ' + bodyClass : '');
+          var curPage = makePageEl(id, false, bodyClass);
+          var curContent = curPage.el.querySelector('.page-content');
+          var avail = CONTENT_H;
+          pages.push(curPage);
+
+          blocks.forEach(function (block) {
+            var node = block.cloneNode(true);
+            var h = measureH(node);
+            if (h <= avail) {
+              curContent.appendChild(node);
+              avail -= h;
+              return;
+            }
+            if (node.tagName === 'P') {
+              var parts = splitParagraph(node, avail);
+              parts.forEach(function (p) {
+                var ph = measureH(p);
+                if (ph > avail) {
+                  curPage = makePageEl(id, false, bodyClass);
+                  curContent = curPage.el.querySelector('.page-content');
+                  pages.push(curPage);
+                  avail = CONTENT_H - ph;
+                  curContent.appendChild(p);
+                } else {
+                  curContent.appendChild(p);
+                  avail -= ph;
+                }
+              });
+              return;
+            }
+            // 整块放不下且不可拆（标题等）：换页
+            curPage = makePageEl(id, false, bodyClass);
+            curContent = curPage.el.querySelector('.page-content');
+            pages.push(curPage);
+            avail = CONTENT_H;
+            var h2 = measureH(node);
+            if (h2 > avail) {
+              // 极端情况：整块超过一页（不可能出现），截断处理
+              curContent.appendChild(node);
+              avail = 0;
+            } else {
+              curContent.appendChild(node);
+              avail -= h2;
+            }
+          });
+        });
+
+        // 补页码：封面、目录、序言、后记不编号；13 篇短文沿原编号 001—013
+        var folioNo = 0;
+        var lastGroup = -1;
+        pages.forEach(function (p, i) {
+          if (p.sheetId === 'cover' || p.sheetId === 'toc' || p.sheetId === 'preface' || p.sheetId === 'afterword') return;
+          var g = -1;
+          sectionStarts.forEach(function (s) { if (s <= i) g = s; });
+          if (g !== lastGroup) { folioNo += 1; lastGroup = g; }
+          var folio = document.createElement('span');
+          folio.className = 'folio';
+          folio.textContent = String(folioNo).padStart(3, '0');
+          p.el.appendChild(folio);
+        });
+      }
+
+      function makePageEl(sheetId, isCover, contentClass) {
+        var el = document.createElement('div');
+        el.className = 'book-page' + (isCover ? ' cover-page' : '');
+        var content = document.createElement('div');
+        content.className = 'page-content' + (contentClass ? ' ' + contentClass : '');
+        el.appendChild(content);
+        stylePage(el);
+        return { sheetId: sheetId, el: el };
+      }
+
+      function renderPage(i) {
+        cur = i;
+        var total = pages.length;
+        var p = pages[cur];
+        bookEl.innerHTML = '';
+        var clone = p.el.cloneNode(true);
+        bookEl.appendChild(clone);
+        progressText.textContent = (cur + 1) + ' / ' + total;
+        progressFill.style.width = ((cur + 1) / total * 100).toFixed(1) + '%';
+        btnPrev.disabled = cur <= 0;
+        btnNext.disabled = cur >= total - 1;
+        currentSheetId = p.sheetId;
+      }
+
+      function goTo(i, animate) {
+        if (busy) return;
+        if (prefaceOpen()) return;
+        if (i < 0 || i >= pages.length || i === cur) return;
+        var dir = i > cur ? 1 : -1;
+        if (animate && !reducedMotion) {
+          busy = true;
+          bookEl.style.setProperty('--rot', (dir > 0 ? '-95deg' : '95deg'));
+          setTimeout(function () {
+            renderPage(i);
+            bookEl.style.setProperty('--rot', '0deg');
+            setTimeout(function () { busy = false; }, 400);
+          }, 200);
+        } else {
+          renderPage(i);
+        }
+      }
+
+      function next() { goTo(cur + 1, true); }
+      function prev() { goTo(cur - 1, true); }
+
+      function jumpToSheet(sheetId) {
+        var idx = sheetStart[sheetId];
+        if (idx !== undefined) goTo(idx, true);
+      }
+
+      /* 序言浮层 */
+      function fillPreface() {
+        var src = document.querySelector('.sheet-preface .preface-body');
+        if (!src || overlayScroll.getAttribute('data-filled')) return;
+        overlayScroll.appendChild(src.cloneNode(true));
+        overlayScroll.setAttribute('data-filled', '1');
+      }
+
+      function openPreface() {
+        fillPreface();
+        overlay.classList.add('open');
+        overlayScroll.scrollTop = 0;
+        overlayClose.focus();
+      }
+
+      function closePreface() {
+        overlay.classList.remove('open');
+      }
+
+      function prefaceOpen() {
+        return overlay.classList.contains('open');
+      }
+
+      function init() {
+        computeLayout();
+        measureEl.style.width = CONTENT_W + 'px';
+        buildPages();
+        if (currentSheetId && sheetStart[currentSheetId] !== undefined) {
+          renderPage(sheetStart[currentSheetId]);
+        } else {
+          renderPage(0);
+        }
+        bookEl.style.setProperty('--sc', SCALE);
+      }
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          computeLayout();
+          measureEl.style.width = CONTENT_W + 'px';
+          buildPages();
+          if (currentSheetId && sheetStart[currentSheetId] !== undefined) {
+            renderPage(sheetStart[currentSheetId]);
+          } else {
+            renderPage(0);
+          }
+          bookEl.style.setProperty('--sc', SCALE);
+        }, 200);
+      });
+
+      // 交互
+      btnPrev.addEventListener('click', prev);
+      btnNext.addEventListener('click', next);
+
+      document.addEventListener('keydown', function (e) {
+        if (prefaceOpen()) {
+          if (e.key === 'Escape') { e.preventDefault(); closePreface(); }
+          return;
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+        else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+        else if (e.key === 'Home') { goTo(0, true); }
+        else if (e.key === 'End') { goTo(pages.length - 1, true); }
+      });
+
+      // 序言浮层的开关
+      overlayClose.addEventListener('click', closePreface);
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closePreface();
+      });
+
+      // 序言链接 + 目录跳转 + 点击页面左右边缘翻页
+      bookEl.addEventListener('click', function (e) {
+        if (e.target.closest('[data-open="preface"]')) {
+          openPreface();
+          return;
+        }
+        var item = e.target.closest('.toc-item');
+        if (item && item.getAttribute('data-target')) {
+          jumpToSheet(item.getAttribute('data-target'));
+          return;
+        }
+        var r = bookEl.getBoundingClientRect();
+        var x = e.clientX - r.left;
+        if (x < r.width * 0.22) prev();
+        else if (x > r.width * 0.78) next();
+      });
+
+      // 触摸滑动
+      var touchX = null;
+      document.addEventListener('touchstart', function (e) {
+        touchX = e.changedTouches[0].clientX;
+      }, { passive: true });
+      document.addEventListener('touchend', function (e) {
+        if (touchX === null) return;
+        if (prefaceOpen()) { touchX = null; return; }
+        var dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 40) {
+          if (dx > 0) prev(); else next();
+        }
+        touchX = null;
+      }, { passive: true });
+
+      // 等字体加载后重新分页一次，校准高度
+      window.addEventListener('load', function () {
+        setTimeout(init, 50);
+      });
+      init();
+    })();
+  </script>
+</body>
+</html>
