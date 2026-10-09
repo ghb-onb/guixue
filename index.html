@@ -947,6 +947,44 @@
       </div>
     </section>
 
+    <!-- 3.3 -->
+    <section class="sheet sheet-chapter" data-sheet="s3">
+      <header class="chapter-header">
+        <span class="chapter-number-corner">3.3</span>
+        <p class="section-label">第三辑 工作与职场</p>
+        <h1 class="chapter-title">干中学</h1>
+      </header>
+      <div class="chapter-body">
+        <p>我觉得，提升一个人最大的方式或者途径，就是干中学。但现在，干中学的门槛被极大地提高了。</p>
+        <p>为什么这么说？</p>
+        <p>因为很多能力，你只有真正去做，才能逐渐掌握。但问题在于，今天的很多事情，并不是你想做就能做的。</p>
+        <p>你想进入一个行业，别人要求你有经验；你想获得经验，却没有进入这个行业的机会。你想通过实践提升自己，却发现实践本身已经成了一种需要争取的资源。</p>
+        <p>这就是如今干中学面临的困境。</p>
+        <p>而且，我认为这个问题很难解决。</p>
+        <p>因为机会本身就是有限的。别人没有义务为你的成长承担成本，你也不可能要求所有人都给你机会。你可以抱怨这种现象不合理，但抱怨并不能让你获得经验；你也可以继续学习理论知识，但如果始终没有实践的机会，你的能力提升终究会受到限制。</p>
+        <p>既然如此，对于一个普通人来说，真正重要的问题就不是如何消除所有门槛，而是如何让自己进入干中学。</p>
+        <p>我认为，首先要改变的是自己的思路。</p>
+        <p>很多人想学会一项技能，首先想到的是学习。他们会问，应该看什么书、学什么课程、掌握哪些知识。</p>
+        <p>这些当然有用，但还有一个问题：你什么时候才能真正开始做？</p>
+        <p>你不能永远等到自己准备充分了再行动，因为你根本不知道，自己距离所谓的准备充分还有多远。很多知识，只有在真正遇到问题的时候，你才知道它的重要性；很多能力，只有在自己动手之后，你才知道差距在哪里。</p>
+        <p>所以，与其一直想着怎样把自己准备得更好，不如想办法让自己尽早进入真实的实践之中。</p>
+        <p>这里的关键，是不要把进入干中学的条件想得过于理想。</p>
+        <p>你未必一开始就能进入理想的公司，获得理想的岗位，或者找到一个愿意从头培养你的人。如果你把这些当成实践的前提，那么你很可能会因为迟迟等不到机会，而一直停留在原地。</p>
+        <p>你需要做的，是寻找自己能够进入的地方。它不一定足够体面，也不一定能带来多大的回报，但至少应该让你接触真实的问题，让你的行动产生真实的结果，并且让你有机会知道自己做得对不对。</p>
+        <p>当然，这不是说所有事情都值得去做。单纯地忙碌，不等于干中学；重复劳动，如果没有思考、反馈和能力积累，也未必能够让人进步。</p>
+        <p>真正重要的是，每做一件事，都尽可能弄清楚三个问题：我解决了什么问题？我在哪个环节做得不好？下一次我能不能做得更好？</p>
+        <p>当你开始这样做的时候，你就不再只是等待别人教你，而是在主动从实践中获取经验。</p>
+        <p>我知道，这依然不能保证一个人一定能够获得机会。有些门槛确实很高，有些资源确实不是个人努力就能得到的。但承认现实的困难，不代表我们只能停留在困难面前。</p>
+        <p>既然干中学的入口越来越难找，那么找到入口本身，就应该成为我们需要学习的一项能力。</p>
+        <p>不要只研究怎样提升自己的能力，还要研究怎样获得使用这种能力的机会；不要只关心自己还缺少什么，也要看看自己现在能做什么，能够从哪里开始。</p>
+        <p>对于一个暂时缺少资源、经验和机会的人来说，这或许比继续等待一个完美的机会更加重要。</p>
+        <p>因为干中学最困难的地方，有时不是开始之后如何学会，而是在开始之前，如何找到一个让自己真正做起来的入口。</p>
+        <p>而一旦进入了实践，哪怕起点很低，你至少拥有了一个可以不断试错、修正和积累经验的地方。</p>
+        <p>所以，我认为，干中学依然是提升自己的重要途径。但在今天，我们还需要多想一步：如何让自己进入干中学。</p>
+        <p>这件事很难，却比站在门外反复讨论门槛有意义得多。</p>
+      </div>
+    </section>
+
     <!-- 4.1 -->
     <section class="sheet sheet-chapter" data-sheet="s4">
       <header class="chapter-header">
@@ -1048,8 +1086,9 @@
       var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       function computeLayout() {
-        var vw = window.innerWidth;
-        var vh = window.innerHeight;
+        /* 视口为 0（后台标签页/被隐藏的窗口）时回退到默认尺寸，避免排成 320px 窄屏 */
+        var vw = window.innerWidth || document.documentElement.clientWidth || 800;
+        var vh = window.innerHeight || document.documentElement.clientHeight || 650;
         if (vw < 700) {
           PAGE_W = Math.max(320, Math.min(vw - 14, 620));
           PAGE_H = Math.max(430, Math.min(vh - 108, 1100));
@@ -1090,19 +1129,22 @@
         return h;
       }
 
-      function splitParagraph(pNode, availH) {
+      function splitParagraph(pNode, availH, fullH) {
+        /* 第一块按当前页剩余空间切，后续块按整页高度切，避免每页只用到六成 */
         var text = pNode.textContent;
         var parts = text.split(/(?<=[。！？；，、：\s])/);
         var out = [];
+        var limit = availH;
         var curP = document.createElement('p');
         parts.forEach(function (part) {
           if (!part) return;
           var test = curP.cloneNode(false);
           test.textContent = curP.textContent + part;
-          if (measureH(test) > availH && curP.textContent) {
+          if (measureH(test) > limit && curP.textContent) {
             out.push(curP);
             curP = document.createElement('p');
             curP.textContent = part;
+            limit = fullH;
           } else {
             curP.textContent = test.textContent;
           }
@@ -1183,7 +1225,7 @@
               return;
             }
             if (node.tagName === 'P') {
-              var parts = splitParagraph(node, avail);
+              var parts = splitParagraph(node, avail, CONTENT_H);
               parts.forEach(function (p) {
                 var ph = measureH(p);
                 if (ph > avail) {
@@ -1216,7 +1258,7 @@
           });
         });
 
-        // 补页码：封面、目录、序言、后记不编号；13 篇短文沿原编号 001—013
+        // 补页码：封面、目录、序言、后记不编号；14 篇短文沿原编号 001—014
         var folioNo = 0;
         var lastGroup = -1;
         pages.forEach(function (p, i) {
@@ -1330,6 +1372,16 @@
           }
           bookEl.style.setProperty('--sc', SCALE);
         }, 200);
+      });
+
+      /* 从后台标签页切回时按真实尺寸重新排版一次 */
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) return;
+        computeLayout();
+        measureEl.style.width = CONTENT_W + 'px';
+        buildPages();
+        renderPage(Math.min(cur, pages.length - 1));
+        bookEl.style.setProperty('--sc', SCALE);
       });
 
       // 交互
