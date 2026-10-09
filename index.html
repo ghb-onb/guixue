@@ -1082,6 +1082,7 @@
       var sheetStart = {};   // sheetId -> first page index
       var cur = 0;
       var busy = false;
+      var pendingSteps = 0;   /* 翻页动画期间累积的点击，动画结束后一次性补上 */
       var currentSheetId = null;
       var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1308,15 +1309,33 @@
           setTimeout(function () {
             renderPage(i);
             bookEl.style.setProperty('--rot', '0deg');
-            setTimeout(function () { busy = false; }, 400);
+            setTimeout(function () {
+              busy = false;
+              if (pendingSteps !== 0) {
+                var step = pendingSteps;
+                pendingSteps = 0;
+                var target = cur + step;
+                if (target < 0) target = 0;
+                if (target > pages.length - 1) target = pages.length - 1;
+                if (target !== cur) goTo(target, true);
+              }
+            }, 400);
           }, 200);
         } else {
           renderPage(i);
         }
       }
 
-      function next() { goTo(cur + 1, true); }
-      function prev() { goTo(cur - 1, true); }
+      function next() {
+        if (prefaceOpen()) return;
+        if (busy) { pendingSteps += 1; return; }
+        goTo(cur + 1, true);
+      }
+      function prev() {
+        if (prefaceOpen()) return;
+        if (busy) { pendingSteps -= 1; return; }
+        goTo(cur - 1, true);
+      }
 
       function jumpToSheet(sheetId) {
         var idx = sheetStart[sheetId];
@@ -1405,8 +1424,10 @@
         if (e.target === overlay) closePreface();
       });
 
-      // 序言链接 + 目录跳转 + 点击页面左右边缘翻页
-      bookEl.addEventListener('click', function (e) {
+      // 点击屏幕任意位置 → 下一页；序言链接、目录项、翻页按钮各走各的
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('.nav-btn')) return;
+        if (e.target.closest('.preface-overlay')) return;
         if (e.target.closest('[data-open="preface"]')) {
           openPreface();
           return;
@@ -1416,10 +1437,9 @@
           jumpToSheet(item.getAttribute('data-target'));
           return;
         }
-        var r = bookEl.getBoundingClientRect();
-        var x = e.clientX - r.left;
-        if (x < r.width * 0.22) prev();
-        else if (x > r.width * 0.78) next();
+        /* 正在选中文字时不翻页 */
+        if (window.getSelection && String(window.getSelection()).length > 0) return;
+        next();
       });
 
       // 触摸滑动
