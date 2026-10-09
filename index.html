@@ -1439,7 +1439,9 @@
         }
         /* 正在选中文字时不翻页 */
         if (window.getSelection && String(window.getSelection()).length > 0) return;
-        next();
+        /* 屏幕右半边 → 下一页；左半边 → 上一页 */
+        var mid = (window.innerWidth || document.documentElement.clientWidth || 800) / 2;
+        if (e.clientX >= mid) next(); else prev();
       });
 
       // 触摸滑动
