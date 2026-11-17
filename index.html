@@ -326,7 +326,7 @@
     }
 
     /* 隐藏的存储区与测量区 */
-    #sheets, #pages { display: none; }
+    #sheets, #pages, #printPages { display: none; }
 
     #measure {
       position: absolute;
@@ -340,22 +340,341 @@
     }
 
     @media print {
+      @page { size: A4; margin: 0; }
       body { background: #fff; overflow: visible; height: auto; }
-      .reader, .nav-btn, .progress-bar { display: none; }
-      #pages { display: block; }
-      .book-page {
-        width: auto;
-        height: auto;
-        min-height: 0;
+      .reader, .nav-btn, .progress-bar, .reader-tool,
+      .directory-panel, .directory-backdrop, #sheets, #measure { display: none !important; }
+      #printPages { display: block !important; }
+      #printPages .book-page {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 27.7cm;
         margin: 0;
+        padding: 2cm;
+        overflow: visible;
+        border-radius: 0;
         box-shadow: none;
         page-break-after: always;
+        break-after: page;
         page-break-inside: avoid;
-        padding: 2cm;
+        background: #fff;
       }
-      .book-page::after { display: none; }
-      .cover-image { min-height: 100vh; }
+      #printPages .book-page::before,
+      #printPages .book-page::after { display: none; }
+      #printPages .cover-page {
+        min-height: 100vh;
+        padding: 0 !important;
+      }
+      #printPages .cover-image {
+        width: 100%;
+        height: 100vh;
+        object-fit: contain;
+      }
+      #printPages .chapter-title { font-size: 25px; }
+      #printPages .chapter-body { font-size: 16px; line-height: 1.8; }
+      #printPages .folio { bottom: 12px; right: 18px; }
     }
+  
+    /* ===== 贵学新版阅读系统 ===== */
+    .book-page {
+      background: #faf8f3;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.34), 0 3px 10px rgba(0, 0, 0, 0.22);
+    }
+
+    .book-page::before {
+      opacity: .55;
+      background-image:
+        radial-gradient(circle at 14% 18%, rgba(26, 26, 26, 0.025) 0%, transparent 17%),
+        radial-gradient(circle at 86% 76%, rgba(143, 91, 82, 0.035) 0%, transparent 19%);
+    }
+
+    .chapter-header {
+      margin-bottom: 32px;
+      padding-right: 54px;
+    }
+
+    .chapter-number-corner {
+      top: 2px;
+      right: 0;
+      padding: 5px 9px;
+      border: 1px solid rgba(143, 91, 82, .2);
+      border-radius: 2px;
+      background: rgba(237, 234, 227, .82);
+      color: var(--rust);
+      font-size: 11px;
+      letter-spacing: .08em;
+    }
+
+    .section-label {
+      display: inline-block;
+      margin: 0 0 17px;
+      padding: 4px 9px;
+      border-left: 2px solid var(--rust);
+      background: #eee9e1;
+      color: #8b665d;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      line-height: 1.5;
+    }
+
+    .chapter-title {
+      max-width: 100%;
+      color: #211e1a;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: .012em;
+      line-height: 1.42;
+      overflow-wrap: anywhere;
+    }
+
+    .chapter-lead {
+      padding: 15px 0 0 18px;
+      border-left-width: 2px;
+      color: #39332e;
+      font-size: 20px;
+      line-height: 1.85;
+    }
+
+    .chapter-body {
+      margin-top: 24px;
+      color: #292621;
+      font-size: 19px;
+      line-height: 1.92;
+      letter-spacing: .008em;
+      overflow-wrap: anywhere;
+    }
+
+    .chapter-body p {
+      margin: 0 0 .92em;
+      text-indent: 0;
+    }
+
+    .chapter-body p:last-child { margin-bottom: 0; }
+
+    .afterword-body {
+      color: #625a52;
+      font-size: 19px;
+      line-height: 1.95;
+    }
+
+    .toc-header { margin-bottom: 34px; }
+    .toc-title { font-size: 42px; letter-spacing: .04em; }
+    .toc-item { padding: 15px 0; }
+    .toc-text { font-size: 19px; }
+    .toc-number { color: var(--rust); }
+
+    .progress-bar {
+      height: 48px;
+      gap: 16px;
+      color: rgba(247, 245, 240, .78);
+      font-size: 11px;
+    }
+
+    .progress-track {
+      width: min(300px, 32vw);
+      height: 3px;
+      background: rgba(247, 245, 240, .18);
+    }
+
+    .progress-fill { background: #c18c7d; }
+
+    .reader-tool {
+      position: fixed;
+      top: 20px;
+      left: 22px;
+      z-index: 30;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid rgba(247, 245, 240, .23);
+      border-radius: 3px;
+      background: rgba(247, 245, 240, .08);
+      color: rgba(247, 245, 240, .9);
+      font: 13px var(--font-body);
+      letter-spacing: .06em;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .reader-tool:hover {
+      background: rgba(247, 245, 240, .16);
+      border-color: rgba(247, 245, 240, .42);
+    }
+
+    .reader-tool svg { width: 15px; height: 15px; }
+
+    .directory-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      background: rgba(18, 17, 16, .58);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .22s ease, visibility .22s ease;
+      backdrop-filter: blur(3px);
+    }
+
+    .directory-backdrop.is-open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .directory-panel {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      width: min(440px, 94vw);
+      height: 100vh;
+      height: 100dvh;
+      padding: 0;
+      background: #f8f6f1;
+      color: #24211d;
+      box-shadow: -18px 0 54px rgba(0, 0, 0, .25);
+      transform: translateX(104%);
+      transition: transform .26s cubic-bezier(.2, .75, .25, 1);
+      will-change: transform;
+    }
+
+    .directory-panel.is-open { transform: translateX(0); }
+
+    .directory-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 26px 15px;
+      border-bottom: 1px solid #e2ddd4;
+      color: #8b665d;
+      font: 11px var(--font-mono);
+      letter-spacing: .16em;
+    }
+
+    .directory-close {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid #ddd5ca;
+      border-radius: 50%;
+      background: transparent;
+      color: #5b5149;
+      font-size: 21px;
+      cursor: pointer;
+    }
+
+    .directory-heading {
+      padding: 24px 26px 18px;
+    }
+
+    .directory-heading h2 {
+      margin: 0 0 7px;
+      font: 700 28px/1.3 var(--font-display);
+      letter-spacing: .04em;
+    }
+
+    .directory-heading p {
+      margin: 0;
+      color: #82796f;
+      font-size: 12px;
+      letter-spacing: .04em;
+    }
+
+    .directory-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 26px 32px;
+      overscroll-behavior: contain;
+    }
+
+    .directory-group { margin: 8px 0 22px; }
+
+    .directory-group h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 8px;
+      padding: 9px 0;
+      border-bottom: 1px solid #ded8ce;
+      color: #8f5b52;
+      font: 500 13px var(--font-body);
+      letter-spacing: .08em;
+    }
+
+    .directory-group h3::before {
+      width: 3px;
+      height: 13px;
+      background: #a8756b;
+      content: "";
+    }
+
+    .directory-item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 9px;
+      align-items: baseline;
+      width: 100%;
+      padding: 9px 7px;
+      border: 0;
+      border-bottom: 1px solid rgba(214, 208, 198, .55);
+      background: transparent;
+      color: #36312c;
+      text-align: left;
+      font: 14px/1.55 var(--font-body);
+      cursor: pointer;
+      transition: color .15s ease, background .15s ease;
+    }
+
+    .directory-item:hover,
+    .directory-item.is-current {
+      background: #eee9e1;
+      color: #8f5b52;
+    }
+
+    .directory-item span:first-child {
+      color: #a0786e;
+      font: 11px var(--font-mono);
+    }
+
+    .directory-item span:last-child { min-width: 0; }
+
+    @media (max-width: 699px) {
+      .reader-tool {
+        top: max(10px, env(safe-area-inset-top));
+        left: 10px;
+        padding: 8px 11px;
+        font-size: 12px;
+        background: rgba(30, 28, 25, .28);
+      }
+
+      .chapter-header { margin-bottom: 24px; padding-right: 48px; }
+      .chapter-title { font-size: 26px; line-height: 1.42; }
+      .section-label { margin-bottom: 13px; font-size: 10px; }
+      .chapter-number-corner { font-size: 10px; padding: 4px 7px; }
+      .chapter-lead { font-size: 17px; line-height: 1.8; padding-left: 14px; }
+      .chapter-body { margin-top: 18px; font-size: 16px; line-height: 1.9; }
+      .afterword-body { font-size: 16px; }
+      .toc-title { font-size: 35px; }
+      .toc-text { font-size: 17px; }
+      .nav-btn { width: 38px; height: 38px; }
+      .nav-btn svg { width: 17px; height: 17px; }
+      .nav-prev { left: 7px; }
+      .nav-next { right: 7px; }
+      .progress-bar { gap: 9px; height: 42px; font-size: 10px; }
+      .progress-track { width: min(120px, 27vw); }
+      .directory-topline { padding: 17px 20px 12px; }
+      .directory-heading { padding: 20px 20px 14px; }
+      .directory-content { padding: 0 20px 26px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .directory-panel, .directory-backdrop, .reader-tool { transition: none !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -363,6 +682,11 @@
   <div class="reader">
     <div class="book" id="book"></div>
   </div>
+
+  <button class="reader-tool" id="openDirectory" type="button" aria-expanded="false" aria-controls="directoryPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    <span>目录</span>
+  </button>
 
   <button class="nav-btn nav-prev" id="btnPrev" aria-label="上一页" title="上一页（←）">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -374,8 +698,21 @@
   <div class="progress-bar">
     <span id="progressText">1 / 1</span>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <span>贵学</span>
+    <span id="currentChapterLabel">贵学</span>
   </div>
+
+  <div class="directory-backdrop" id="directoryBackdrop"></div>
+  <aside class="directory-panel" id="directoryPanel" aria-hidden="true" aria-labelledby="directoryTitle">
+    <div class="directory-topline">
+      <span>GUIXUE / CONTENTS</span>
+      <button class="directory-close" id="closeDirectory" type="button" aria-label="关闭目录">×</button>
+    </div>
+    <div class="directory-heading">
+      <h2 id="directoryTitle">章节目录</h2>
+      <p id="directorySummary">按辑浏览，点击章节直接阅读</p>
+    </div>
+    <nav class="directory-content" id="chapterDirectory" aria-label="全书章节目录"></nav>
+  </aside>
 
   <!-- ===== 内容源（sheets） ===== -->
   <div id="sheets">
@@ -1118,6 +1455,7 @@
 
   <!-- 测量容器（与真实页面同宽同排版，用于自动分页） -->
   <div id="measure" class="page-content"></div>
+  <div id="printPages" aria-hidden="true"></div>
 
   <script>
     (function () {
@@ -1130,10 +1468,19 @@
       var btnNext = document.getElementById('btnNext');
       var progressText = document.getElementById('progressText');
       var progressFill = document.getElementById('progressFill');
+      var currentChapterLabel = document.getElementById('currentChapterLabel');
+      var openDirectoryButton = document.getElementById('openDirectory');
+      var closeDirectoryButton = document.getElementById('closeDirectory');
+      var directoryBackdrop = document.getElementById('directoryBackdrop');
+      var directoryPanel = document.getElementById('directoryPanel');
+      var chapterDirectory = document.getElementById('chapterDirectory');
+      var directorySummary = document.getElementById('directorySummary');
+      var printPages = document.getElementById('printPages');
 
       var PAGE_W, PAGE_H, PAD_X, PAD_Y, SCALE, CONTENT_W, CONTENT_H;
       var pages = [];        // {sheetId, el}
       var sheetStart = {};   // sheetId -> first page index
+      var chapterStart = {}; // chapter number -> first page index
       var cur = 0;
       var busy = false;
       var pendingSteps = 0;   /* 翻页动画期间累积的点击，动画结束后一次性补上 */
@@ -1145,11 +1492,11 @@
         var vw = window.innerWidth || document.documentElement.clientWidth || 800;
         var vh = window.innerHeight || document.documentElement.clientHeight || 650;
         if (vw < 700) {
-          PAGE_W = Math.max(320, Math.min(vw - 14, 620));
-          PAGE_H = Math.max(430, Math.min(vh - 108, 1100));
-          PAD_X = 26;
-          PAD_Y = 34;
-          SCALE = 1;
+          PAGE_W = Math.max(280, Math.min(vw - 24, 620));
+          PAGE_H = Math.max(400, Math.min(vh - 104, 820));
+          PAD_X = 22;
+          PAD_Y = 30;
+          SCALE = Math.min(1, (vh - 104) / PAGE_H, (vw - 24) / PAGE_W);
         } else {
           PAGE_W = 690;
           PAGE_H = 820;
@@ -1211,6 +1558,7 @@
       function buildPages() {
         pages = [];
         sheetStart = {};
+        chapterStart = {};
         var sheets = sheetsEl.querySelectorAll('.sheet');
         var sectionStarts = [];
         sheets.forEach(function (sheet) {
@@ -1220,6 +1568,15 @@
           if (sheetStart[id] === undefined) sheetStart[id] = sheetFirst;
           var isCover = sheet.classList.contains('sheet-cover');
           var isToc = sheet.classList.contains('sheet-toc');
+          var isChapter = sheet.classList.contains('sheet-chapter');
+          var header = sheet.querySelector('.chapter-header');
+          var chapterNo = isChapter && header && header.querySelector('.chapter-number-corner')
+            ? header.querySelector('.chapter-number-corner').textContent.trim() : '';
+          var chapterTitle = isChapter && header && header.querySelector('.chapter-title')
+            ? header.querySelector('.chapter-title').textContent.trim() : '';
+          var sectionName = isChapter && header && header.querySelector('.section-label')
+            ? header.querySelector('.section-label').textContent.trim() : '';
+          if (chapterNo) chapterStart[chapterNo] = sheetFirst;
 
           if (isCover) {
             var coverPage = makePageEl(id, true, null);
@@ -1254,7 +1611,6 @@
           var body = sheet.querySelector('.chapter-body, .afterword-body');
           var bodyClass = body ? body.className : '';
           var blocks = [];
-          var header = sheet.querySelector('.chapter-header');
           var lead = sheet.querySelector('.chapter-lead');
           if (header) blocks.push(header);
           if (lead) blocks.push(lead);
@@ -1264,7 +1620,7 @@
           if (!blocks.length) blocks = Array.prototype.slice.call(sheet.children);
 
           measureEl.className = 'page-content' + (bodyClass ? ' ' + bodyClass : '');
-          var curPage = makePageEl(id, false, bodyClass);
+          var curPage = makePageEl(id, false, bodyClass, chapterNo, chapterTitle, sectionName);
           var curContent = curPage.el.querySelector('.page-content');
           var avail = CONTENT_H;
           pages.push(curPage);
@@ -1282,7 +1638,7 @@
               parts.forEach(function (p) {
                 var ph = measureH(p);
                 if (ph > avail) {
-                  curPage = makePageEl(id, false, bodyClass);
+                  curPage = makePageEl(id, false, bodyClass, chapterNo, chapterTitle, sectionName);
                   curContent = curPage.el.querySelector('.page-content');
                   pages.push(curPage);
                   avail = CONTENT_H - ph;
@@ -1295,7 +1651,7 @@
               return;
             }
             // 整块放不下且不可拆（标题等）：换页
-            curPage = makePageEl(id, false, bodyClass);
+            curPage = makePageEl(id, false, bodyClass, chapterNo, chapterTitle, sectionName);
             curContent = curPage.el.querySelector('.page-content');
             pages.push(curPage);
             avail = CONTENT_H;
@@ -1324,16 +1680,105 @@
           folio.textContent = String(folioNo).padStart(3, '0');
           p.el.appendChild(folio);
         });
+        buildDirectory();
+        renderPrintPages();
       }
 
-      function makePageEl(sheetId, isCover, contentClass) {
+      function buildDirectory() {
+        chapterDirectory.innerHTML = '';
+        var chapters = Array.prototype.slice.call(sheetsEl.querySelectorAll('.sheet-chapter'));
+        var groups = [];
+        var groupMap = {};
+
+        chapters.forEach(function (sheet) {
+          var header = sheet.querySelector('.chapter-header');
+          if (!header) return;
+          var section = header.querySelector('.section-label');
+          var number = header.querySelector('.chapter-number-corner');
+          var title = header.querySelector('.chapter-title');
+          if (!number || !title) return;
+          var groupName = section ? section.textContent.trim() : '其他';
+          if (!groupMap[groupName]) {
+            groupMap[groupName] = { name: groupName, chapters: [] };
+            groups.push(groupMap[groupName]);
+          }
+          groupMap[groupName].chapters.push({
+            number: number.textContent.trim(),
+            title: title.textContent.trim()
+          });
+        });
+
+        directorySummary.textContent = groups.length + ' 辑 · ' + chapters.length + ' 篇短章 · 点击章节直接阅读';
+
+        groups.forEach(function (group) {
+          var section = document.createElement('section');
+          section.className = 'directory-group';
+          var heading = document.createElement('h3');
+          heading.textContent = group.name;
+          section.appendChild(heading);
+
+          group.chapters.forEach(function (chapter) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'directory-item';
+            button.setAttribute('data-chapter-number', chapter.number);
+            var number = document.createElement('span');
+            number.textContent = chapter.number;
+            var title = document.createElement('span');
+            title.textContent = chapter.title;
+            button.appendChild(number);
+            button.appendChild(title);
+            section.appendChild(button);
+          });
+
+          chapterDirectory.appendChild(section);
+        });
+      }
+
+      function renderPrintPages() {
+        printPages.innerHTML = '';
+        pages.forEach(function (page) {
+          var clone = page.el.cloneNode(true);
+          clone.classList.add('print-page');
+          printPages.appendChild(clone);
+        });
+      }
+
+      function setDirectoryOpen(open) {
+        directoryPanel.classList.toggle('is-open', open);
+        directoryBackdrop.classList.toggle('is-open', open);
+        directoryPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        openDirectoryButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+          var active = chapterDirectory.querySelector('.directory-item.is-current');
+          if (active) active.scrollIntoView({ block: 'nearest' });
+          closeDirectoryButton.focus();
+        } else {
+          openDirectoryButton.focus();
+        }
+      }
+
+      function jumpToChapter(number) {
+        var index = chapterStart[number];
+        if (index === undefined) return;
+        setDirectoryOpen(false);
+        goTo(index, true);
+      }
+
+      function makePageEl(sheetId, isCover, contentClass, chapterNo, chapterTitle, sectionName) {
         var el = document.createElement('div');
         el.className = 'book-page' + (isCover ? ' cover-page' : '');
         var content = document.createElement('div');
         content.className = 'page-content' + (contentClass ? ' ' + contentClass : '');
         el.appendChild(content);
         stylePage(el);
-        return { sheetId: sheetId, el: el };
+        return {
+          sheetId: sheetId,
+          chapterNo: chapterNo || '',
+          chapterTitle: chapterTitle || '',
+          sectionName: sectionName || '',
+          el: el
+        };
       }
 
       function renderPage(i) {
@@ -1348,6 +1793,17 @@
         btnPrev.disabled = cur <= 0;
         btnNext.disabled = cur >= total - 1;
         currentSheetId = p.sheetId;
+        currentChapterLabel.textContent = p.chapterNo
+          ? p.chapterNo + ' · ' + p.chapterTitle
+          : (p.sheetId === 'toc' ? '目录' : (p.sheetId === 'afterword' ? '后记' : '贵学'));
+
+        var directoryItems = chapterDirectory.querySelectorAll('.directory-item');
+        directoryItems.forEach(function (item) {
+          var active = item.getAttribute('data-chapter-number') === p.chapterNo;
+          item.classList.toggle('is-current', active);
+          if (active) item.setAttribute('aria-current', 'page');
+          else item.removeAttribute('aria-current');
+        });
       }
 
       function goTo(i, animate) {
@@ -1429,11 +1885,25 @@
         bookEl.style.setProperty('--sc', SCALE);
       });
 
+      // 目录面板
+      openDirectoryButton.addEventListener('click', function () { setDirectoryOpen(true); });
+      closeDirectoryButton.addEventListener('click', function () { setDirectoryOpen(false); });
+      directoryBackdrop.addEventListener('click', function () { setDirectoryOpen(false); });
+      directoryPanel.addEventListener('click', function (e) {
+        var item = e.target.closest('.directory-item');
+        if (item) jumpToChapter(item.getAttribute('data-chapter-number'));
+      });
+
       // 交互
       btnPrev.addEventListener('click', prev);
       btnNext.addEventListener('click', next);
 
       document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && directoryPanel.classList.contains('is-open')) {
+          setDirectoryOpen(false);
+          return;
+        }
+        if (directoryPanel.classList.contains('is-open')) return;
         if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
         else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
         else if (e.key === 'Home') { goTo(0, true); }
@@ -1442,7 +1912,7 @@
 
       // 点击屏幕任意位置 → 下一页；目录项、翻页按钮各走各的
       document.addEventListener('click', function (e) {
-        if (e.target.closest('.nav-btn')) return;
+        if (e.target.closest('.nav-btn, .reader-tool, .directory-panel, .directory-backdrop')) return;
         var item = e.target.closest('.toc-item');
         if (item && item.getAttribute('data-target')) {
           jumpToSheet(item.getAttribute('data-target'));
@@ -1458,6 +1928,10 @@
       // 触摸滑动
       var touchX = null;
       document.addEventListener('touchstart', function (e) {
+        if (e.target.closest('.directory-panel, .reader-tool')) {
+          touchX = null;
+          return;
+        }
         touchX = e.changedTouches[0].clientX;
       }, { passive: true });
       document.addEventListener('touchend', function (e) {
