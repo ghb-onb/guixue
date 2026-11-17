@@ -675,6 +675,21 @@
       .directory-panel, .directory-backdrop, .reader-tool { transition: none !important; }
     }
 
+    #currentChapterLabel {
+      display: inline-block;
+      max-width: min(48vw, 330px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media print {
+      #printPages .chapter-title { font-size: 25px !important; }
+      #printPages .chapter-body { font-size: 16px !important; line-height: 1.8 !important; }
+      #printPages .afterword-body { font-size: 16px !important; }
+      #printPages .chapter-header { margin-bottom: 25px !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -702,7 +717,7 @@
   </div>
 
   <div class="directory-backdrop" id="directoryBackdrop"></div>
-  <aside class="directory-panel" id="directoryPanel" aria-hidden="true" aria-labelledby="directoryTitle">
+  <aside class="directory-panel" id="directoryPanel" aria-hidden="true" aria-labelledby="directoryTitle" inert>
     <div class="directory-topline">
       <span>GUIXUE / CONTENTS</span>
       <button class="directory-close" id="closeDirectory" type="button" aria-label="关闭目录">×</button>
@@ -1748,6 +1763,7 @@
         directoryPanel.classList.toggle('is-open', open);
         directoryBackdrop.classList.toggle('is-open', open);
         directoryPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        directoryPanel.inert = !open;
         openDirectoryButton.setAttribute('aria-expanded', open ? 'true' : 'false');
         if (open) {
           var active = chapterDirectory.querySelector('.directory-item.is-current');
